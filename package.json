@@ -1,0 +1,77 @@
+{
+  "name": "@resurgam/seo-next",
+  "version": "1.0.0",
+  "description": "Official Next.js App Router integration package for the Resurgam SEO WordPress plugin in headless architectures.",
+  "author": "Resurgam Digital <team@resurgam.digital>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teamresurgam/resurgam-seo-next.git"
+  },
+  "bugs": {
+    "url": "https://github.com/teamresurgam/resurgam-seo-next/issues"
+  },
+  "homepage": "https://resurgam.digital",
+  "keywords": [
+    "resurgam",
+    "seo",
+    "nextjs",
+    "headless",
+    "wordpress",
+    "metadata",
+    "json-ld",
+    "schema",
+    "sitemap",
+    "robots",
+    "app-router"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs run",
+    "test:watch": "node scripts/test.mjs",
+    "test:coverage": "node scripts/test.mjs run --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "peerDependencies": {
+    "next": ">=13.4.0 <16.0.0",
+    "react": ">=18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
