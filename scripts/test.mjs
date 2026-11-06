@@ -23,16 +23,16 @@ const parentVitestMjs = resolve(packageRoot, '../licensing-platform/backend/node
 const extraArgs = process.argv.slice(2);
 
 let result;
-if (existsSync(localVitestBinCmd) && process.platform === 'win32') {
-  result = spawnSync(localVitestBinCmd, extraArgs, { cwd: packageRoot, stdio: 'inherit', shell: true });
-} else if (existsSync(localVitestBin)) {
-  result = spawnSync(localVitestBin, extraArgs, { cwd: packageRoot, stdio: 'inherit' });
-} else if (existsSync(localVitestMjs)) {
+if (existsSync(localVitestMjs)) {
   result = spawnSync(process.execPath, [localVitestMjs, ...extraArgs], { cwd: packageRoot, stdio: 'inherit' });
 } else if (existsSync(parentVitestMjs)) {
   result = spawnSync(process.execPath, [parentVitestMjs, ...extraArgs], { cwd: packageRoot, stdio: 'inherit' });
+} else if (existsSync(localVitestBinCmd) && process.platform === 'win32') {
+  result = spawnSync(`"${localVitestBinCmd}"`, extraArgs, { cwd: packageRoot, stdio: 'inherit', shell: true });
+} else if (existsSync(localVitestBin)) {
+  result = spawnSync(localVitestBin, extraArgs, { cwd: packageRoot, stdio: 'inherit' });
 } else {
-  result = spawnSync('npx', ['vitest', ...extraArgs], { cwd: packageRoot, stdio: 'inherit', shell: true });
+  result = spawnSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vitest', ...extraArgs], { cwd: packageRoot, stdio: 'inherit' });
 }
 
 process.exit(result.status ?? 0);
