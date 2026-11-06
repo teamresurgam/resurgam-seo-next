@@ -1,6 +1,6 @@
 {
-  "name": "@resurgam/seo-next",
-  "version": "1.0.0",
+  "name": "@resurgam14/resurgam-seo-next",
+  "version": "1.0.1",
   "description": "Official Next.js App Router integration package for the Resurgam SEO WordPress plugin in headless architectures.",
   "author": "Resurgam Digital <team@resurgam.digital>",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "vitest": "^1.2.0"
   },
   "peerDependencies": {
-    "next": ">=13.4.0 <16.0.0",
+    "next": ">=13.4.0",
     "react": ">=18.2.0"
   },
   "peerDependenciesMeta": {
@@ -74,4 +74,3 @@
     "node": ">=18.0.0"
   }
 }
-

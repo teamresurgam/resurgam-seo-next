@@ -36,7 +36,7 @@ export class WordPressClient {
   }
 
   /**
-   * Internal fetch wrapper using the native Fetch API with timeout, Next.js cache options, and error handling.
+   * Internal fetch wrapper using the native Fetch API with timeout, Next.js cache options, retries, and error handling.
    */
   public async fetch<T>(path: string, init: RequestInit = {}, options?: FetchOptions, extraTags: string[] = []): Promise<T> {
     const url = this.resolveEndpointUrl(path);
@@ -61,66 +61,86 @@ export class WordPressClient {
 
     // Timeout signal handling
     const timeoutMs = this.config.timeoutMs || 8000;
-    let signal = options?.signal || init.signal;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const maxRetries = 2;
+    let attempt = 0;
 
-    if (!signal) {
-      if (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal) {
-        signal = AbortSignal.timeout(timeoutMs);
-      } else {
-        const controller = new AbortController();
-        timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-        signal = controller.signal;
+    while (attempt <= maxRetries) {
+      let signal = options?.signal || init.signal;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      if (!signal) {
+        if (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal) {
+          signal = AbortSignal.timeout(timeoutMs);
+        } else {
+          const controller = new AbortController();
+          timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+          signal = controller.signal;
+        }
       }
-    }
 
-    try {
-      const fetchOptions: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
-        ...init,
-        headers,
-        signal,
-        ...cacheOpts,
-      };
+      try {
+        const fetchOptions: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
+          ...init,
+          headers,
+          signal,
+          ...cacheOpts,
+        };
 
-      const response = await fetch(url, fetchOptions);
+        const response = await fetch(url, fetchOptions);
 
-      if (!response.ok) {
-        let errBody: any = null;
-        try {
-          errBody = await response.json();
-        } catch {
-          try {
-            errBody = await response.text();
-          } catch {
-            errBody = null;
+        if (!response.ok) {
+          // If transient server error or rate-limit, retry up to maxRetries
+          if ((response.status >= 500 || response.status === 429) && attempt < maxRetries) {
+            attempt++;
+            await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+            continue;
           }
+
+          let errBody: any = null;
+          try {
+            errBody = await response.json();
+          } catch {
+            try {
+              errBody = await response.text();
+            } catch {
+              errBody = null;
+            }
+          }
+
+          const errMsg =
+            (errBody && typeof errBody === 'object' && (errBody.message || errBody.code)) ||
+            response.statusText ||
+            `HTTP ${response.status}`;
+
+          throw new WordPressAPIError(String(errMsg), response.status, url, errBody);
         }
 
-        const errMsg =
-          (errBody && typeof errBody === 'object' && (errBody.message || errBody.code)) ||
-          response.statusText ||
-          `HTTP ${response.status}`;
+        const json = (await response.json()) as T;
+        return json;
+      } catch (err: any) {
+        if (err instanceof WordPressAPIError) {
+          throw err;
+        }
 
-        throw new WordPressAPIError(String(errMsg), response.status, url, errBody);
-      }
+        if (attempt < maxRetries && (err.name === 'FetchError' || err.name === 'TypeError' || err.code === 'ECONNRESET')) {
+          attempt++;
+          await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+          continue;
+        }
 
-      const json = (await response.json()) as T;
-      return json;
-    } catch (err: any) {
-      if (err instanceof WordPressAPIError) {
-        throw err;
-      }
+        if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+          throw new WordPressAPIError(`Request timed out after ${timeoutMs}ms`, 408, url);
+        }
 
-      if (err.name === 'AbortError' || err.name === 'TimeoutError') {
-        throw new WordPressAPIError(`Request timed out after ${timeoutMs}ms`, 408, url);
-      }
-
-      throw new WordPressAPIError(err.message || 'Unknown network error', 0, url, err);
-    } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+        throw new WordPressAPIError(err.message || 'Unknown network error', 0, url, err);
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
     }
+
+    throw new WordPressAPIError('Request failed after retries', 500, url);
   }
 
   /**
@@ -139,20 +159,22 @@ export class WordPressClient {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: body !== undefined ? JSON.stringify(body) : undefined,
+        body: body ? JSON.stringify(body) : undefined,
       },
       options
     );
   }
 
   /**
-   * Tests the connection to the WordPress SEO REST API.
+   * Diagnostic connectivity test against the remote WordPress backend.
    */
   public async testConnection(): Promise<WordPressConnectionTestResponse> {
     try {
-      return await this.post<WordPressConnectionTestResponse>('/test-connection', {
-        url: this.config.siteUrl,
-      });
+      const result = await this.get<WordPressConnectionTestResponse>(
+        '/test-connection',
+        { cache: 'no-store' }
+      );
+      return result;
     } catch (err: any) {
       return {
         success: false,
@@ -161,4 +183,3 @@ export class WordPressClient {
     }
   }
 }
-

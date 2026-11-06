@@ -65,6 +65,22 @@ export interface ResurgamSEOConfig {
   trailingSlash?: boolean;
 
   /**
+   * Optional site name (e.g. "Resurgam Digital").
+   */
+  siteName?: string;
+
+  /**
+   * Optional default Open Graph fallback image URL.
+   */
+  defaultOgImage?: string;
+
+  /**
+   * URL route patterns mapping post types to frontend routes.
+   * Default: { post: '/blog/:slug', project: '/case-studies/:slug', page: '/:slug', capability: '/capabilities/:slug' }
+   */
+  urlMappings?: Record<string, string>;
+
+  /**
    * Custom request headers to pass along with fetch requests.
    */
   headers?: Record<string, string>;
@@ -127,6 +143,14 @@ export function validateConfig(config: unknown): ResurgamSEOConfig {
     defaultRevalidate: raw.defaultRevalidate === false ? false : typeof raw.defaultRevalidate === 'number' ? raw.defaultRevalidate : 3600,
     defaultTags: Array.isArray(raw.defaultTags) ? raw.defaultTags : ['resurgam-seo'],
     trailingSlash: typeof raw.trailingSlash === 'boolean' ? raw.trailingSlash : undefined,
+    siteName: raw.siteName?.trim() || 'Resurgam Digital',
+    defaultOgImage: raw.defaultOgImage?.trim(),
+    urlMappings: raw.urlMappings || {
+      post: '/blog/:slug',
+      project: '/case-studies/:slug',
+      page: '/:slug',
+      capability: '/capabilities/:slug',
+    },
     headers: raw.headers || {},
   };
 }

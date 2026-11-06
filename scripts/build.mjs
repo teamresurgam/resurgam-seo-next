@@ -6,41 +6,42 @@
  */
 
 import { execSync } from 'child_process';
-import { copyFileSync, readdirSync, statSync, mkdirSync, existsSync } from 'fs';
-import { resolve, dirname, extname, join } from 'path';
+import { existsSync } from 'fs';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import esbuild from 'esbuild';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageRoot = resolve(__dirname, '..');
-const distDir = resolve(packageRoot, 'dist');
 
-console.log('Compiling TypeScript...');
+console.log('Compiling TypeScript declarations...');
 const parentTsc = resolve(packageRoot, '../licensing-platform/backend/node_modules/typescript/bin/tsc');
 if (existsSync(parentTsc)) {
-  execSync(`node "${parentTsc}" --project tsconfig.json`, { cwd: packageRoot, stdio: 'inherit' });
+  execSync(`node "${parentTsc}" --project tsconfig.json --declaration --emitDeclarationOnly`, { cwd: packageRoot, stdio: 'inherit' });
 } else {
-  execSync('npx tsc --project tsconfig.json', { cwd: packageRoot, stdio: 'inherit' });
+  execSync('npx tsc --project tsconfig.json --declaration --emitDeclarationOnly', { cwd: packageRoot, stdio: 'inherit' });
 }
 
-// Generate .mjs mirrors for ESM consumers
-function generateMjsMirrors(dir) {
-  const entries = readdirSync(dir);
-  for (const entry of entries) {
-    const fullPath = join(dir, entry);
-    const stat = statSync(fullPath);
-    if (stat.isDirectory()) {
-      generateMjsMirrors(fullPath);
-    } else if (extname(entry) === '.js') {
-      const mjsPath = join(dir, entry.replace(/\.js$/, '.mjs'));
-      copyFileSync(fullPath, mjsPath);
-    }
-  }
-}
+console.log('Building ESM and CommonJS bundles with esbuild...');
+await esbuild.build({
+  entryPoints: [resolve(packageRoot, 'src/index.ts')],
+  outfile: resolve(packageRoot, 'dist/index.mjs'),
+  format: 'esm',
+  bundle: true,
+  external: ['react', 'next', 'next/*'],
+  sourcemap: true,
+  target: 'es2022',
+});
 
-if (existsSync(distDir)) {
-  generateMjsMirrors(distDir);
-}
+await esbuild.build({
+  entryPoints: [resolve(packageRoot, 'src/index.ts')],
+  outfile: resolve(packageRoot, 'dist/index.js'),
+  format: 'cjs',
+  bundle: true,
+  external: ['react', 'next', 'next/*'],
+  sourcemap: true,
+  target: 'es2022',
+});
 
 console.log('Build completed successfully.');
-
