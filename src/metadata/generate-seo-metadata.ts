@@ -1,6 +1,6 @@
 import type { WordPressSEOData } from '../types/wordpress';
 import type { ResurgamSEOConfig } from '../types/config';
-import type { NextMetadata } from '../types/seo';
+import type { NextMetadata, SEOQueryParams } from '../types/seo';
 import { resolveCanonicalUrl } from './canonical';
 import { mapOpenGraph } from './open-graph';
 import { mapTwitter } from './twitter';
@@ -13,7 +13,8 @@ import { mapTwitter } from './twitter';
  */
 export function mapToNextMetadata(
   data: WordPressSEOData | null | undefined,
-  config: ResurgamSEOConfig
+  config: ResurgamSEOConfig,
+  query?: SEOQueryParams
 ): NextMetadata {
   if (!data) {
     return {};
@@ -27,6 +28,10 @@ export function mapToNextMetadata(
   const canonicalUrl = resolveCanonicalUrl(data.canonical || data.canonical_url, {
     siteUrl: config.siteUrl,
     trailingSlash: config.trailingSlash,
+    type: data.content_type,
+    slug: data.slug || query?.slug,
+    preferredPath: query?.path || query?.url,
+    urlMappings: config.urlMappings,
   });
 
   // Robots directives (only if provided by WordPress)
@@ -49,7 +54,7 @@ export function mapToNextMetadata(
   }
 
   // Open Graph and Twitter
-  const openGraph = mapOpenGraph(data, config);
+  const openGraph = mapOpenGraph(data, config, query);
   const twitter = mapTwitter(data, config);
 
   // Metadata base URL

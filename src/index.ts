@@ -21,6 +21,10 @@ export {
   ResurgamJSONLD,
   serializeJsonLd,
   deduplicateSchema,
+  rewriteSchemaOrigins,
+  createFaqSchema,
+  appendFaqSchema,
+  renderJsonLdString,
   type ResurgamJSONLDProps,
 } from './schema/json-ld';
 

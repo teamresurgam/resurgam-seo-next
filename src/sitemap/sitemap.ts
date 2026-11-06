@@ -74,6 +74,9 @@ export async function generateSitemap(
         const frontendUrl = resolveCanonicalUrl(item.url, {
           siteUrl: config.siteUrl,
           trailingSlash: config.trailingSlash,
+          type: item.type,
+          slug: item.slug,
+          urlMappings: config.urlMappings,
         });
 
         if (!frontendUrl) continue;

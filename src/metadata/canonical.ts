@@ -5,6 +5,10 @@
 export interface CanonicalOptions {
   siteUrl: string;
   trailingSlash?: boolean;
+  type?: string;
+  slug?: string;
+  preferredPath?: string;
+  urlMappings?: Record<string, string>;
 }
 
 /**
@@ -25,17 +29,35 @@ export function resolveCanonicalUrl(
     return undefined;
   }
 
-  const { siteUrl, trailingSlash } = options;
+  const { siteUrl, trailingSlash, type, slug, preferredPath, urlMappings } = options;
   const cleanSiteBase = siteUrl.replace(/\/+$/, '');
   const trimmed = rawCanonical.trim();
 
   let pathAndQuery = '';
-  try {
-    const parsed = new URL(trimmed);
-    pathAndQuery = `${parsed.pathname}${parsed.search}`;
-  } catch {
-    // Relative path passed
-    pathAndQuery = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+
+  if (preferredPath && preferredPath.trim()) {
+    pathAndQuery = preferredPath.trim();
+  } else if (type && slug && urlMappings && urlMappings[type]) {
+    pathAndQuery = urlMappings[type].replace(':slug', slug);
+  } else {
+    try {
+      const parsed = new URL(trimmed);
+      pathAndQuery = `${parsed.pathname}${parsed.search}`;
+    } catch {
+      // Relative path passed
+      pathAndQuery = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    }
+
+    // If WordPress returned a plain query permalink like /?project=foo or /?p=123
+    if (pathAndQuery.startsWith('/?') || pathAndQuery.startsWith('?')) {
+      if (type && slug && urlMappings && urlMappings[type]) {
+        pathAndQuery = urlMappings[type].replace(':slug', slug);
+      } else if (slug) {
+        pathAndQuery = `/${slug}`;
+      }
+    } else if (type === 'post' && slug && !pathAndQuery.startsWith('/blog/')) {
+      pathAndQuery = `/blog/${slug}`;
+    }
   }
 
   // Ensure leading slash

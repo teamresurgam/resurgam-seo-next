@@ -1,6 +1,6 @@
 import type { WordPressSEOData } from '../types/wordpress';
 import type { ResurgamSEOConfig } from '../types/config';
-import type { NextMetadata } from '../types/seo';
+import type { NextMetadata, SEOQueryParams } from '../types/seo';
 import { resolveCanonicalUrl } from './canonical';
 
 /**
@@ -9,7 +9,8 @@ import { resolveCanonicalUrl } from './canonical';
  */
 export function mapOpenGraph(
   data: WordPressSEOData | null | undefined,
-  config: ResurgamSEOConfig
+  config: ResurgamSEOConfig,
+  query?: SEOQueryParams
 ): NextMetadata['openGraph'] {
   const og = data?.open_graph;
   if (!og) {
@@ -21,6 +22,10 @@ export function mapOpenGraph(
   const canonicalUrl = resolveCanonicalUrl(og.url || data?.canonical || data?.canonical_url, {
     siteUrl: config.siteUrl,
     trailingSlash: config.trailingSlash,
+    type: data?.content_type,
+    slug: data?.slug || query?.slug,
+    preferredPath: query?.path || query?.url,
+    urlMappings: config.urlMappings,
   });
 
   const images: NonNullable<NextMetadata['openGraph']>['images'] = [];
