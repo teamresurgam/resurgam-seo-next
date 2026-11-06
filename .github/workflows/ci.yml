@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       release:
@@ -31,7 +33,7 @@ jobs:
 
   publish:
     needs: test
-    if: github.event.inputs.release == 'true'
+    if: github.event.inputs.release == 'true' || github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
