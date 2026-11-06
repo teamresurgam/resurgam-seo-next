@@ -110,3 +110,4 @@ test(schema): add test suite for breadcrumb JSON-LD generator
 - **Bug Reports**: Please use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md) and include steps to reproduce, expected vs. actual behavior, and environment details.
 - **Feature Requests**: Please use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md) describing the problem and proposed API design.
 - **Security Vulnerabilities**: Refer to [SECURITY.md](SECURITY.md) for private disclosure instructions.
+

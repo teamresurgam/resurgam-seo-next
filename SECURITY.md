@@ -24,3 +24,4 @@ The Resurgam SEO team takes security seriously. If you discover a vulnerability,
    - Package version and Next.js / Node.js version.
 3. We will acknowledge receipt within 48 hours and provide an estimated timeline for remediation.
 4. Once resolved, we will publish a coordinated advisory and release a patched version on npm.
+

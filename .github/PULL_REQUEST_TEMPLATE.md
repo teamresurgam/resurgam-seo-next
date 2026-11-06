@@ -27,3 +27,4 @@ Related Issue: Closes #(issue number)
 - [ ] TypeScript typecheck passes without errors (`npm run typecheck`).
 - [ ] Package builds cleanly (`npm run build`).
 - [ ] My commit messages follow [Conventional Commits](https://www.conventionalcommits.org/).
+
